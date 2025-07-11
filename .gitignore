@@ -13,7 +13,7 @@
 !README.md
 !package.json
 !vercel.json
-!client-examples.html
-!config-generator.html
+!public/client-examples.html
+!public/config-generator.html
 !test-local.html
 !test-local-with-config.html
