@@ -1,0 +1,2012 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Generate custom embed codes for chat widgets with advanced configuration options">
+    <meta name="keywords" content="chat widget, embed code, configuration generator, live chat">
+    <title>Chat Widget Config Generator</title>
+    
+    <!-- Preload critical resources -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Icons&family=Open+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* CSS Custom Properties for consistent theming */
+        :root {
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --accent-color: #2563eb;
+            --accent-secondary: #1d4ed8;
+            --success-color: #059669;
+            --success-hover: #047857;
+            --error-color: #ef4444;
+            --text-primary: #374151;
+            --text-secondary: #6b7280;
+            --text-light: #f1f5f9;
+            --bg-light: #f8fafc;
+            --bg-dark: #1e293b;
+            --bg-code: #0f172a;
+            --border-color: #e5e7eb;
+            --border-focus: #667eea;
+            --shadow-primary: 0 20px 40px rgba(0,0,0,0.1);
+            --shadow-secondary: 0 10px 40px rgba(0,0,0,0.3);
+            --border-radius: 8px;
+            --border-radius-lg: 16px;
+            --spacing-xs: 4px;
+            --spacing-sm: 8px;
+            --spacing-md: 12px;
+            --spacing-lg: 16px;
+            --spacing-xl: 20px;
+            --spacing-2xl: 30px;
+        }
+
+        /* Reset and base styles */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Open Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background: #fafafa;
+            min-height: 100vh;
+            color: var(--text-primary);
+        }
+
+        /* Layout components */
+        .header {
+            background: white;
+            color: #09090b;
+            padding: var(--spacing-2xl);
+            text-align: left;
+            border-bottom: 1px solid #e4e4e7;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 2rem;
+            font-weight: 600;
+            letter-spacing: -0.025em;
+            font-family: 'Open Sans', sans-serif;
+        }
+
+        .header p {
+            margin: 4px 0 0 0;
+            opacity: 0.72;
+            font-size: 0.875rem;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: minmax(300px, 1fr) minmax(300px, 1fr);
+            gap: 0;
+            height: calc(100vh - 140px);
+        }
+
+        .form-section {
+            padding: var(--spacing-2xl);
+            background: white;
+            overflow-y: auto;
+            border-right: 1px solid #e4e4e7;
+        }
+
+        .right-section {
+            padding: 0;
+            background: #fafafa;
+            color: #09090b;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .toggle-header {
+            padding: var(--spacing-lg);
+            border-bottom: 1px solid #e4e4e7;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .toggle-controls {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 2px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .toggle-btn {
+            padding: var(--spacing-sm) var(--spacing-md);
+            border: none;
+            background: transparent;
+            color: #6b7280;
+            font-size: 0.875rem;
+            font-weight: 500;
+            border-radius: calc(var(--border-radius) - 2px);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+        }
+
+        .toggle-btn.active {
+            background: #09090b;
+            color: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .toggle-btn .material-icons {
+            font-size: 1rem;
+        }
+
+        .right-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .preview-view {
+            position: relative;
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: var(--spacing-2xl);
+        }
+
+        .code-view {
+            display: none;
+            flex: 1;
+            flex-direction: column;
+        }
+
+        .code-view.active {
+            display: flex;
+        }
+
+        .preview-view.active {
+            display: block;
+        }
+
+        .preview-view:not(.active) {
+            display: none;
+        }
+
+
+        /* Form components */
+        .form-group {
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0;
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 0.875rem;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: var(--spacing-md) var(--spacing-lg);
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 0.875rem;
+            line-height: 1.5;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            font-family: inherit;
+            background: white;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--border-focus);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-group input:invalid,
+        .form-group textarea:invalid {
+            border-color: var(--error-color);
+        }
+
+        .form-group select {
+            cursor: pointer;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12"><path fill="%23666" d="M6 8L2 4h8z"/></svg>');
+            background-repeat: no-repeat;
+            background-position: right var(--spacing-md) center;
+            background-size: 12px;
+            padding-right: 40px;
+            appearance: none;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+            max-height: 120px;
+        }
+
+        .color-input-group {
+            display: flex;
+            gap: var(--spacing-md);
+            align-items: center;
+        }
+
+        .color-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--spacing-xl);
+            align-items: start;
+        }
+
+        .color-section {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .color-section.secondary-hidden {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .color-input {
+            width: 80px !important;
+            height: 45px;
+            padding: var(--spacing-xs);
+            cursor: pointer;
+            border-radius: var(--border-radius);
+            flex-shrink: 0;
+        }
+
+        .color-hex-input {
+            width: 120px !important;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+        }
+
+        .single-color-control {
+            grid-column: span 2;
+            margin-top: var(--spacing-md);
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+            accent-color: var(--accent-color);
+        }
+
+        .checkbox-group label {
+            margin-bottom: 0;
+            cursor: pointer;
+        }
+
+        /* Button components */
+        .generate-btn {
+            width: 100%;
+            background: #09090b;
+            color: white;
+            border: none;
+            padding: var(--spacing-lg) var(--spacing-xl);
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            margin-top: var(--spacing-xl);
+        }
+
+        .generate-btn:hover {
+            background: #18181b;
+        }
+
+        .generate-btn:active {
+            background: #09090b;
+        }
+
+
+        /* Output components */
+        .code-header {
+            padding: var(--spacing-lg);
+            margin-bottom: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .code-header-content h3 {
+            margin: 0 0 4px 0;
+            color: #09090b;
+            font-size: 1rem;
+            text-align: left;
+        }
+
+        .code-header-content p {
+            margin: 0;
+            opacity: 0.72;
+            font-size: 0.875rem;
+        }
+
+        .header-copy-btn {
+            background: var(--success-color);
+            color: white;
+            border: none;
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: var(--border-radius);
+            font-size: 0.75rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+            min-width: 80px;
+            justify-content: center;
+        }
+
+        .header-copy-btn .material-icons {
+            font-size: 1rem;
+        }
+
+        .header-copy-btn:hover {
+            background: var(--success-hover);
+        }
+
+        .header-copy-btn.copied {
+            background: #10b981;
+        }
+
+        .code-output {
+            background: #09090b;
+            border: 1px solid #27272a;
+            border-radius: var(--border-radius);
+            padding: var(--spacing-xl);
+            margin: 0 var(--spacing-lg) var(--spacing-lg) var(--spacing-lg);
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.8125rem;
+            line-height: 1.4;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-x: auto;
+            color: #fafafa;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+
+        /* Preview components */
+        .preview-widget {
+            background: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 0.625rem 1.5625rem var(--shadow, rgba(15,23,42,0.15));
+            color: var(--text-primary);
+            width: 25rem;
+            height: 38.75rem;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .preview-chat-header {
+            background: linear-gradient(135deg, var(--primary, #2563eb) 0%, var(--secondary, #1d4ed8) 100%);
+            color: white;
+            padding: 1.25rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            min-height: 3.75rem;
+            overflow: visible;
+        }
+
+        .preview-header-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+        }
+
+        .preview-avatar {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            flex-shrink: 0;
+            overflow: visible;
+            position: relative;
+        }
+
+        .preview-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .preview-avatar .material-icons {
+            font-size: 1.25rem;
+            color: white;
+        }
+
+        .preview-text-info {
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+        }
+
+        .preview-text-info h4 {
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 1rem;
+            margin: 0 0 0.25rem 0;
+            line-height: 1.2;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+        }
+
+        .preview-text-info p {
+            font-family: 'Inter', sans-serif;
+            font-weight: 400;
+            font-size: 0.875rem;
+            opacity: 0.9;
+            margin: 0;
+            line-height: 1.3;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+        }
+
+        .preview-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-shrink: 0;
+        }
+
+        .preview-action-btn {
+            width: 2rem;
+            height: 2rem;
+            border: none;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            transition: background 0.2s ease;
+        }
+        
+        .preview-action-btn .material-icons {
+            font-size: 1.25rem;
+        }
+
+        .preview-description {
+            background: #f8fafc;
+            color: #374151;
+            padding: 1.25rem;
+            font-size: 0.875rem;
+            line-height: 1.3;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+            opacity: 0.8;
+        }
+
+        .preview-description.hidden {
+            display: none !important;
+        }
+
+        /* Mobile responsive for embedded preview */
+        @media (max-width: 768px) {
+            .preview-widget-container.embedded-mode {
+                width: 100% !important;
+                margin: 0 !important;
+            }
+
+            .preview-widget-container.embedded-mode .preview-widget {
+                width: 100% !important;
+                max-width: none !important;
+                margin: 0 !important;
+            }
+        }
+
+        .preview-messages {
+            flex: 1;
+            padding: 1rem;
+            overflow-y: auto;
+            background: var(--bg, white);
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .preview-bot-message-group {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            align-self: flex-start;
+            max-width: 100%;
+            background: transparent;
+            padding: 0;
+            border-radius: 0;
+        }
+
+        .preview-bot-avatar {
+            width: 2rem;
+            height: 2rem;
+            border-radius: 50%;
+            background: var(--light-bg, #f1f5f9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            flex-shrink: 0;
+            overflow: hidden;
+            border: 1px solid var(--border, #e2e8f0);
+            position: relative;
+        }
+
+        .preview-bot-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .preview-bot-avatar .material-icons {
+            font-size: 1.25rem;
+            color: var(--text, #374151);
+            opacity: 0.7;
+        }
+
+        /* Status indicator - ONLY for header avatar, NOT bot message avatars */
+        .status-indicator {
+            position: absolute;
+            bottom: 0.125rem;
+            right: 0.125rem;
+            width: 0.625rem;
+            height: 0.625rem;
+            border-radius: 50%;
+            border: 0.125rem solid white;
+            z-index: 10;
+        }
+
+        .status-indicator.online {
+            background: #10b981;
+        }
+
+        .status-indicator.away {
+            background: #f59e0b;
+        }
+
+        .status-indicator.offline {
+            background: #6b7280;
+        }
+
+
+        .preview-bot-message {
+            background: var(--light-bg, #f8fafc);
+            color: var(--text-primary, #374151);
+            padding: 0.75rem 1rem;
+            border-radius: 1.125rem;
+            border-top-left-radius: 0.25rem;
+            font-size: 1rem;
+            line-height: 1.4;
+            word-wrap: break-word;
+            max-width: 80%;
+        }
+
+        .preview-bot-message a {
+            color: var(--accent-color) !important;
+            text-decoration: underline !important;
+            font-weight: 500 !important;
+            word-break: break-all;
+        }
+
+        .preview-bot-message a:hover {
+            color: var(--accent-secondary) !important;
+            text-decoration: underline !important;
+        }
+
+        .preview-toggle-container {
+            position: absolute;
+            bottom: 1.25rem;
+            right: -4.75rem;
+            z-index: 10;
+        }
+        
+        .preview-widget-container {
+            position: relative;
+            width: 25rem;
+            height: 38.75rem;
+            margin-right: 6rem;
+        }
+
+        .preview-toggle {
+            width: 3.5rem;
+            height: 3.5rem;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary, #2563eb) 0%, var(--secondary, #1d4ed8) 100%);
+            border: none;
+            color: white;
+            box-shadow: 0 0.25rem 0.75rem var(--shadow, rgba(0,0,0,0.15));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            overflow: hidden;
+            transition: all 0.2s ease;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        .preview-toggle-logo {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .preview-input-area {
+            background: var(--bg, white);
+            padding: 0.75rem;
+            border-top: 1px solid var(--border, #e2e8f0);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .preview-input {
+            flex: 1;
+            height: auto;
+            min-height: 1.4rem;
+            padding: 0.5rem 0;
+            border: none;
+            outline: none;
+            font-size: 1rem;
+            font-family: inherit;
+            background: transparent;
+            color: var(--text, #0f172a);
+            resize: none;
+            line-height: 1.4;
+            word-wrap: break-word;
+            box-sizing: border-box;
+        }
+
+        .preview-input::placeholder {
+            color: #9ca3af;
+        }
+
+        .preview-send-btn {
+            width: 2.5rem;
+            height: 2.5rem;
+            min-width: 2.5rem;
+            border-radius: 50%;
+            background: transparent;
+            border: none;
+            color: #9ca3af;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+            flex-grow: 0;
+        }
+        
+        .preview-send-btn .material-icons {
+            width: 1.5rem;
+            height: 1.5rem;
+            font-size: 1.5rem;
+            display: inline-block;
+        }
+
+        /* Utility classes */
+        .required {
+            color: var(--error-color);
+        }
+
+        .help-text {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 0;
+            margin-bottom: var(--spacing-sm);
+            line-height: 1.4;
+        }
+
+        /* Help text that appears after buttons or other elements */
+        .help-text.after-element,
+        button + .help-text,
+        .copy-btn + .help-text,
+        .checkbox-group + .help-text {
+            margin-top: var(--spacing-xs);
+            margin-bottom: var(--spacing-md);
+        }
+
+        /* Legend styling for fieldsets */
+        fieldset legend.help-text {
+            margin-bottom: var(--spacing-lg);
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 0.875rem;
+        }
+
+        /* Checkbox group spacing */
+        .checkbox-group {
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .checkbox-group:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .content {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto;
+            }
+
+            .form-section {
+                padding: var(--spacing-xl);
+                max-height: none;
+                border-right: none;
+                border-bottom: 1px solid #e4e4e7;
+            }
+
+            .color-row {
+                grid-template-columns: 1fr;
+                gap: var(--spacing-lg);
+            }
+
+            .single-color-control {
+                grid-column: span 1;
+            }
+
+            .toggle-header {
+                padding: var(--spacing-lg);
+            }
+
+            .code-header {
+                padding: var(--spacing-lg);
+            }
+
+            .code-output {
+                margin: 0 var(--spacing-lg) var(--spacing-lg) var(--spacing-lg);
+            }
+
+            .preview-view {
+                padding: var(--spacing-xl);
+            }
+
+            .header {
+                padding: var(--spacing-xl);
+            }
+
+            .preview-widget-container {
+                width: 100%;
+                max-width: 380px;
+                height: auto;
+                margin-right: 0;
+            }
+
+            .preview-widget {
+                width: 100%;
+                height: auto;
+                min-height: 500px;
+            }
+
+            .preview-toggle-container {
+                right: 20px;
+                bottom: -76px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .form-section {
+                padding: var(--spacing-lg);
+            }
+
+            .toggle-header {
+                padding: var(--spacing-lg);
+            }
+
+            .code-header {
+                padding: var(--spacing-lg);
+            }
+
+            .code-output {
+                margin: 0 var(--spacing-lg) var(--spacing-lg) var(--spacing-lg);
+            }
+
+            .preview-view {
+                padding: var(--spacing-lg);
+            }
+
+            .header {
+                padding: var(--spacing-lg);
+            }
+
+            .form-group {
+                margin-bottom: var(--spacing-lg);
+            }
+
+            .preview-widget-container {
+                width: 100%;
+                max-width: 340px;
+                margin-right: 0;
+            }
+
+            .preview-widget {
+                width: 100%;
+                height: auto;
+                min-height: 450px;
+            }
+
+            .preview-toggle-container {
+                right: 20px;
+                bottom: -76px;
+            }
+        }
+
+        /* Focus management for accessibility */
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        /* High contrast mode support */
+        @media (prefers-contrast: high) {
+            .form-group input,
+            .form-group textarea,
+            .form-group select {
+                border-width: 2px;
+            }
+        }
+
+        /* Loading state */
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        /* Error state */
+        .error {
+            border-color: var(--error-color) !important;
+            background-color: #fef2f2;
+        }
+
+        /* Success state */
+        .success {
+            border-color: var(--success-color) !important;
+            background-color: #f0fdf4;
+        }
+    </style>
+</head>
+<body>
+    <header class="header" role="banner">
+        <h1>Chat Widget Config Generator</h1>
+        <p>Generate custom embed codes for your clients with advanced configuration options</p>
+    </header>
+    
+    <main class="content">
+        <section class="form-section" aria-label="Configuration Form">
+                <form id="config-form" novalidate>
+                    <div class="form-group">
+                        <label for="clientId">
+                            Client ID <span class="required" aria-label="required">*</span>
+                        </label>
+                        <div class="help-text">
+                            Unique identifier for the client (letters, numbers, underscores only)
+                        </div>
+                        <input 
+                            type="text" 
+                            id="clientId" 
+                            name="clientId"
+                            placeholder="e.g., bawma_co_uk" 
+                            required 
+                            aria-describedby="clientId-help"
+                            pattern="[a-z0-9_]+"
+                            autocomplete="off"
+                        >
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="clientName">
+                            Business Name <span class="required" aria-label="required">*</span>
+                        </label>
+                        <div class="help-text">
+                            The name of your business or organization
+                        </div>
+                        <input 
+                            type="text" 
+                            id="clientName" 
+                            name="clientName"
+                            placeholder="e.g., Bawma Clinic" 
+                            required
+                            autocomplete="organization"
+                        >
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="subtitle">Subtitle</label>
+                        <div class="help-text">
+                            Short tagline or description shown under your business name
+                        </div>
+                        <input 
+                            type="text" 
+                            id="subtitle" 
+                            name="subtitle"
+                            placeholder="e.g., Expert Medical Care"
+                            autocomplete="off"
+                        >
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="description">Welcome Description</label>
+                        <div class="help-text">
+                            Brief welcome message displayed to users when they open the chat
+                        </div>
+                        <textarea 
+                            id="description" 
+                            name="description"
+                            placeholder="e.g., Get instant answers about our services and treatments"
+                            aria-describedby="description-help"
+                        ></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="placeholder">Input Placeholder</label>
+                        <div class="help-text">
+                            Placeholder text shown in the message input field
+                        </div>
+                        <input 
+                            type="text" 
+                            id="placeholder" 
+                            name="placeholder"
+                            placeholder="e.g., What can we help you with today?"
+                            autocomplete="off"
+                        >
+                    </div>
+                    
+                    <div class="form-group">
+                        <div class="color-row">
+                            <div class="color-section">
+                                <label for="primaryColor">Primary Color</label>
+                                <div class="help-text">
+                                    Main brand color for headers and buttons
+                                </div>
+                                <div class="color-input-group">
+                                    <input 
+                                        type="color" 
+                                        id="primaryColor" 
+                                        name="primaryColor"
+                                        value="#2563eb" 
+                                        class="color-input"
+                                        aria-describedby="primaryColor-help"
+                                    >
+                                    <input 
+                                        type="text" 
+                                        id="primaryColorHex" 
+                                        name="primaryColorHex"
+                                        value="#2563eb" 
+                                        class="color-hex-input"
+                                        placeholder="#000000"
+                                        pattern="^#[0-9A-Fa-f]{6}$"
+                                        maxlength="7"
+                                    >
+                                </div>
+                            </div>
+                            
+                            <div id="secondary-color-section" class="color-section">
+                                <label for="secondaryColor">Secondary Color</label>
+                                <div class="help-text">
+                                    Color for gradients and accents
+                                </div>
+                                <div class="color-input-group">
+                                    <input 
+                                        type="color" 
+                                        id="secondaryColor" 
+                                        name="secondaryColor"
+                                        value="#1d4ed8" 
+                                        class="color-input"
+                                        aria-describedby="secondaryColor-help"
+                                    >
+                                    <input 
+                                        type="text" 
+                                        id="secondaryColorHex" 
+                                        name="secondaryColorHex"
+                                        value="#1d4ed8" 
+                                        class="color-hex-input"
+                                        placeholder="#000000"
+                                        pattern="^#[0-9A-Fa-f]{6}$"
+                                        maxlength="7"
+                                    >
+                                </div>
+                            </div>
+                            
+                            <div class="single-color-control">
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="useSingleColor" name="useSingleColor">
+                                    <label for="useSingleColor">Use single color (hide secondary color)</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="position">Widget Position</label>
+                        <div class="help-text">
+                            Where the chat widget appears on the page
+                        </div>
+                        <select id="position" name="position" aria-describedby="position-help">
+                            <option value="bottom-right">Bottom Right</option>
+                            <option value="bottom-left">Bottom Left</option>
+                            <option value="top-right">Top Right</option>
+                            <option value="top-left">Top Left</option>
+                            <option value="embedded">Embedded (Inline)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="theme">Theme</label>
+                        <div class="help-text">
+                            Visual theme for the widget interface. Auto detects user's system preference when not specified.
+                        </div>
+                        <select id="theme" name="theme" aria-describedby="theme-help">
+                            <option value="">Auto (System Preference)</option>
+                            <option value="light">Light</option>
+                            <option value="dark">Dark</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="profileIcon">Profile Icon URL (optional)</label>
+                        <div class="help-text">
+                            Custom avatar image URL for the support agent
+                        </div>
+                        <input 
+                            type="url" 
+                            id="profileIcon" 
+                            name="profileIcon"
+                            placeholder="https://example.com/avatar.png"
+                            aria-describedby="profileIcon-help"
+                        >
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="companyLogo">Company Logo URL (optional)</label>
+                        <div class="help-text">
+                            Company logo used for branding in toggle button and/or profile
+                        </div>
+                        <input 
+                            type="url" 
+                            id="companyLogo" 
+                            name="companyLogo"
+                            placeholder="https://example.com/logo.png"
+                            aria-describedby="companyLogo-help"
+                        >
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="botName">Bot Name</label>
+                        <div class="help-text">
+                            Name for bot identity (used internally)
+                        </div>
+                        <input 
+                            type="text" 
+                            id="botName" 
+                            name="botName"
+                            placeholder="Assistant" 
+                            value="Assistant"
+                            aria-describedby="botName-help"
+                        >
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="webhookUrl">Custom Webhook URL (optional)</label>
+                        <div class="help-text">
+                            Custom endpoint for message processing (leave blank to use default n8n webhook)
+                        </div>
+                        <input 
+                            type="url" 
+                            id="webhookUrl" 
+                            name="webhookUrl"
+                            placeholder="Leave blank for default"
+                            aria-describedby="webhookUrl-help"
+                        >
+                    </div>
+                    
+                    <fieldset class="form-group">
+                        <legend class="help-text">Widget Options</legend>
+                        
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="showRefresh" name="showRefresh" checked>
+                            <label for="showRefresh">Show Refresh Button</label>
+                        </div>
+                        
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="showStatus" name="showStatus" checked>
+                            <label for="showStatus">Show Status Indicator</label>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="status" class="help-text">Status</label>
+                            <select id="status" name="status" class="form-input">
+                                <option value="online">Online</option>
+                                <option value="away">Away</option>
+                                <option value="offline">Offline</option>
+                            </select>
+                        </div>
+                        
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="useLogoAsToggle" name="useLogoAsToggle">
+                            <label for="useLogoAsToggle">Use Logo as Toggle Button</label>
+                        </div>
+                        <div class="help-text">Replace chat icon with company logo</div>
+                        
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="useLogoAsProfile" name="useLogoAsProfile" checked>
+                            <label for="useLogoAsProfile">Use Logo as Profile Avatar</label>
+                        </div>
+                        <div class="help-text">Use company logo in header and bot message avatars</div>
+                    </fieldset>
+                    
+                    <div class="form-group">
+                        <label for="logLevel">Debug Level (for developers)</label>
+                        <div id="logLevel-help" class="help-text">
+                            Controls console logging for debugging purposes
+                        </div>
+                        <select id="logLevel" name="logLevel" aria-describedby="logLevel-help">
+                            <option value="none">None</option>
+                            <option value="error" selected>Error Only</option>
+                            <option value="warn">Warnings</option>
+                            <option value="info">Info</option>
+                            <option value="debug">Debug (Verbose)</option>
+                        </select>
+                    </div>
+                    
+                    <button type="submit" class="generate-btn">
+                        🎨 Generate Widget Code
+                    </button>
+                </form>
+            </section>
+            
+            <aside class="right-section" role="region" aria-label="Widget Preview and Code">
+                <div class="toggle-header">
+                    <div class="toggle-controls">
+                        <button id="preview-toggle-btn" class="toggle-btn active" aria-pressed="true">
+                            <span class="material-icons">visibility</span>
+                            Preview
+                        </button>
+                        <button id="code-toggle-btn" class="toggle-btn" aria-pressed="false">
+                            <span class="material-icons">code</span>
+                            Code
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="right-content">
+                    <!-- Preview View -->
+                    <div id="preview-view" class="preview-view active">
+                        <div class="preview-widget-container">
+                            <div class="preview-widget">
+                                <div 
+                                    id="preview-chat-header" 
+                                    class="preview-chat-header" 
+                                    style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);"
+                                >
+                                    <div class="preview-header-info">
+                                        <div id="preview-avatar" class="preview-avatar" aria-hidden="true">
+                                            <span class="material-icons">person</span>
+                                            <div id="preview-status-indicator" class="status-indicator online" style="display: none;"></div>
+                                        </div>
+                                        <div class="preview-text-info">
+                                            <h4 id="preview-name">Support Team</h4>
+                                            <p id="preview-subtitle">How can we help?</p>
+                                        </div>
+                                    </div>
+                                    <div class="preview-actions">
+                                        <div class="preview-action-btn">
+                                            <span class="material-icons">refresh</span>
+                                        </div>
+                                        <div class="preview-action-btn">
+                                            <span class="material-icons">close</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="preview-description" id="preview-description">
+                                    Ask us anything and we'll get back to you right away.
+                                </div>
+                                <div class="preview-messages">
+                                    <div class="preview-bot-message-group">
+                                        <div id="preview-bot-avatar" class="preview-bot-avatar">
+                                            <span class="material-icons">person</span>
+                                        </div>
+                                        <div class="preview-bot-message">
+                                            Welcome! How can I help you today? You can also visit <a href="https://example.com" target="_blank" rel="noopener noreferrer">https://example.com</a> for more info.
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="preview-input-area">
+                                    <input 
+                                        type="text" 
+                                        id="preview-input" 
+                                        class="preview-input" 
+                                        placeholder="Type your message here..."
+                                        readonly
+                                        aria-label="Preview of message input field"
+                                    >
+                                    <div class="preview-send-btn">
+                                        <span class="material-icons">send_outlined</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="preview-toggle-container">
+                                <div id="preview-toggle" class="preview-toggle">
+                                    <span class="material-icons">forum</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Code View -->
+                    <div id="code-view" class="code-view">
+                        <div class="code-header">
+                            <div class="code-header-content">
+                                <h3>Generated Code</h3>
+                                <p>Copy and paste this into your client's website before the closing &lt;/body&gt; tag</p>
+                            </div>
+                            <button 
+                                id="copy-btn" 
+                                class="header-copy-btn" 
+                                style="display: none;"
+                                aria-label="Copy code to clipboard"
+                            >
+                                <span class="material-icons">content_copy</span>
+                            </button>
+                        </div>
+                        
+                        <div 
+                            id="code-output" 
+                            class="code-output" 
+                            role="textbox" 
+                            aria-readonly="true"
+                            aria-label="Generated widget code"
+                            tabindex="0"
+                        >
+                            Fill out the form to generate your custom widget code...
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </main>
+
+    <script>
+        'use strict';
+        
+        (function() {
+            // Constants
+            var STORAGE_KEY = 'chatWidgetConfig';
+            var DEBOUNCE_DELAY = 300;
+            
+            // DOM elements
+            var form = document.getElementById('config-form');
+            var codeOutput = document.getElementById('code-output');
+            var copyBtn = document.getElementById('copy-btn');
+            
+            var previewChatHeader = document.getElementById('preview-chat-header');
+            var previewName = document.getElementById('preview-name');
+            var previewSubtitle = document.getElementById('preview-subtitle');
+            var previewDescription = document.getElementById('preview-description');
+            var previewInput = document.getElementById('preview-input');
+            var previewAvatar = document.getElementById('preview-avatar');
+            var previewBotAvatar = document.getElementById('preview-bot-avatar');
+            var previewToggle = document.getElementById('preview-toggle');
+            
+            // Utility functions
+            function debounce(func, wait) {
+                var timeout;
+                return function executedFunction() {
+                    var context = this;
+                    var args = arguments;
+                    var later = function() {
+                        timeout = null;
+                        func.apply(context, args);
+                    };
+                    clearTimeout(timeout);
+                    timeout = setTimeout(later, wait);
+                };
+            }
+            
+            function sanitizeInput(input) {
+                if (typeof input !== 'string') return '';
+                return input.replace(/[<>&"']/g, function(match) {
+                    var map = {
+                        '<': '&lt;',
+                        '>': '&gt;',
+                        '&': '&amp;',
+                        '"': '&quot;',
+                        "'": '&#39;'
+                    };
+                    return map[match];
+                });
+            }
+            
+            function linkifyText(text) {
+                if (typeof text !== 'string') return '';
+                var urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+|[^\s]+@[^\s]+\.[^\s]+)/g;
+                return text.replace(urlRegex, function(url) {
+                    var href = url.startsWith('http') ? url : 'https://' + url;
+                    return '<a href="' + href + '" target="_blank" rel="noopener noreferrer">' + url + '</a>';
+                });
+            }
+            
+            function validateUrl(url) {
+                if (!url) return true; // Optional fields
+                try {
+                    new URL(url);
+                    return url.startsWith('http://') || url.startsWith('https://');
+                } catch {
+                    return false;
+                }
+            }
+            
+            function showError(element, message) {
+                element.classList.add('error');
+                element.setAttribute('aria-invalid', 'true');
+                
+                var existingError = element.parentNode.querySelector('.error-message');
+                if (existingError) {
+                    existingError.remove();
+                }
+                
+                var errorDiv = document.createElement('div');
+                errorDiv.className = 'error-message help-text';
+                errorDiv.style.color = 'var(--error-color)';
+                errorDiv.textContent = message;
+                errorDiv.setAttribute('role', 'alert');
+                element.parentNode.appendChild(errorDiv);
+            }
+            
+            function clearError(element) {
+                element.classList.remove('error');
+                element.removeAttribute('aria-invalid');
+                
+                var existingError = element.parentNode.querySelector('.error-message');
+                if (existingError) {
+                    existingError.remove();
+                }
+            }
+            
+            function showSuccess(element) {
+                element.classList.add('success');
+                setTimeout(function() {
+                    element.classList.remove('success');
+                }, 2000);
+            }
+            
+            // Configuration management
+            function getConfig() {
+                var config = {
+                    clientId: document.getElementById('clientId').value.trim(),
+                    clientName: document.getElementById('clientName').value.trim(),
+                    subtitle: document.getElementById('subtitle').value.trim(),
+                    description: document.getElementById('description').value.trim(),
+                    placeholder: document.getElementById('placeholder').value.trim(),
+                    primaryColor: document.getElementById('primaryColor').value,
+                    secondaryColor: document.getElementById('secondaryColor').value,
+                    position: document.getElementById('position').value,
+                    theme: document.getElementById('theme').value,
+                    profileIcon: document.getElementById('profileIcon').value.trim(),
+                    companyLogo: document.getElementById('companyLogo').value.trim(),
+                    botName: document.getElementById('botName').value.trim(),
+                    webhookUrl: document.getElementById('webhookUrl').value.trim(),
+                    showRefresh: document.getElementById('showRefresh').checked,
+                    showStatus: document.getElementById('showStatus').checked,
+                    status: document.getElementById('status').value,
+                    useLogoAsToggle: document.getElementById('useLogoAsToggle').checked,
+                    useLogoAsProfile: document.getElementById('useLogoAsProfile').checked,
+                    useSingleColor: document.getElementById('useSingleColor').checked,
+                    logLevel: document.getElementById('logLevel').value
+                };
+                
+                return config;
+            }
+            
+            function validateConfig(config) {
+                var errors = [];
+                
+                if (!config.clientId) {
+                    errors.push({ field: 'clientId', message: 'Client ID is required' });
+                } else if (!/^[a-z0-9_]+$/.test(config.clientId)) {
+                    errors.push({ field: 'clientId', message: 'Client ID can only contain lowercase letters, numbers, and underscores' });
+                }
+                
+                if (!config.clientName) {
+                    errors.push({ field: 'clientName', message: 'Business Name is required' });
+                }
+                
+                if (config.profileIcon && !validateUrl(config.profileIcon)) {
+                    errors.push({ field: 'profileIcon', message: 'Profile Icon must be a valid URL' });
+                }
+                
+                if (config.companyLogo && !validateUrl(config.companyLogo)) {
+                    errors.push({ field: 'companyLogo', message: 'Company Logo must be a valid URL' });
+                }
+                
+                if (config.webhookUrl && !validateUrl(config.webhookUrl)) {
+                    errors.push({ field: 'webhookUrl', message: 'Webhook URL must be a valid URL' });
+                }
+                
+                return errors;
+            }
+            
+            function saveConfig(config) {
+                try {
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
+                } catch (e) {
+                    console.warn('Failed to save configuration to localStorage:', e);
+                }
+            }
+            
+            function loadConfig() {
+                try {
+                    var saved = localStorage.getItem(STORAGE_KEY);
+                    if (saved) {
+                        var config = JSON.parse(saved);
+                        Object.keys(config).forEach(function(key) {
+                            var element = document.getElementById(key);
+                            if (element) {
+                                if (element.type === 'checkbox') {
+                                    element.checked = config[key];
+                                } else {
+                                    element.value = config[key];
+                                }
+                            }
+                        });
+                    }
+                } catch (e) {
+                    console.warn('Failed to load configuration from localStorage:', e);
+                }
+            }
+            
+            // Code generation
+            function generateWidgetCode(config) {
+                var attributes = [];
+                
+                if (config.clientId) {
+                    attributes.push('  data-client-id="' + sanitizeInput(config.clientId) + '"');
+                }
+                if (config.clientName) {
+                    attributes.push('  data-client-name="' + sanitizeInput(config.clientName) + '"');
+                }
+                if (config.subtitle) {
+                    attributes.push('  data-subtitle="' + sanitizeInput(config.subtitle) + '"');
+                }
+                if (config.description) {
+                    attributes.push('  data-description="' + sanitizeInput(config.description) + '"');
+                }
+                if (config.placeholder) {
+                    attributes.push('  data-placeholder="' + sanitizeInput(config.placeholder) + '"');
+                }
+                if (config.primaryColor && config.primaryColor !== '#2563eb') {
+                    attributes.push('  data-primary-color="' + config.primaryColor + '"');
+                }
+                // Only include secondary color if not using single color mode and it's different from default
+                if (!config.useSingleColor && config.secondaryColor && config.secondaryColor !== '#1d4ed8') {
+                    attributes.push('  data-secondary-color="' + config.secondaryColor + '"');
+                }
+                if (config.position && config.position !== 'bottom-right') {
+                    if (config.position === 'embedded') {
+                        attributes.push('  data-demo-mode="embedded"');
+                    } else {
+                        attributes.push('  data-position="' + config.position + '"');
+                    }
+                }
+                if (config.theme && config.theme !== 'light' && config.theme !== '') {
+                    attributes.push('  data-theme="' + config.theme + '"');
+                }
+                if (config.profileIcon) {
+                    attributes.push('  data-profile-icon="' + sanitizeInput(config.profileIcon) + '"');
+                }
+                if (config.companyLogo) {
+                    attributes.push('  data-company-logo="' + sanitizeInput(config.companyLogo) + '"');
+                }
+                if (config.botName && config.botName !== 'Assistant') {
+                    attributes.push('  data-bot-name="' + sanitizeInput(config.botName) + '"');
+                }
+                if (config.webhookUrl) {
+                    attributes.push('  data-webhook-url="' + sanitizeInput(config.webhookUrl) + '"');
+                }
+                if (!config.showRefresh) {
+                    attributes.push('  data-show-refresh-button="false"');
+                }
+                if (!config.showStatus) {
+                    attributes.push('  data-show-status="false"');
+                }
+                if (config.status !== 'online') {
+                    attributes.push('  data-status="' + sanitizeInput(config.status) + '"');
+                }
+                if (config.useLogoAsToggle) {
+                    attributes.push('  data-use-logo-as-toggle="true"');
+                }
+                if (!config.useLogoAsProfile) {
+                    attributes.push('  data-use-logo-as-profile="false"');
+                }
+                if (config.logLevel && config.logLevel !== 'error') {
+                    attributes.push('  data-log-level="' + config.logLevel + '"');
+                }
+                
+                var result = '<!-- Optimized Chat Widget for ' + sanitizeInput(config.clientName || 'Client') + ' -->\n';
+                result += '<script\n';
+                result += '  src="https://your-domain.com/js/chatwidget.js"';
+                if (attributes.length > 0) {
+                    result += '\n' + attributes.join('\n');
+                }
+                result += '>\n';
+                result += '</' + 'script>\n\n';
+                result += '<!--\n';
+                result += 'Installation Instructions:\n';
+                result += '1. Add this script tag before the closing </body> tag\n';
+                result += '2. Replace "https://your-domain.com/" with your actual domain\n';
+                result += '3. Test on staging before deploying to production\n';
+                result += '4. Widget features: Material Icons, accessibility, retry logic, logging\n';
+                result += '5. Position: ' + (config.position || 'bottom-right') + ' | Theme: ' + (config.theme || 'auto (system preference)') + '\n';
+                result += '6. Theme auto-detects user system preference when not specified\n';
+                result += '-->';
+                
+                return result;
+            }
+            
+            // Preview management
+            function updatePreview(config) {
+                var primaryColor = config.primaryColor || '#2563eb';
+                var secondaryColor = config.useSingleColor ? primaryColor : (config.secondaryColor || '#1d4ed8');
+                
+                // Update header colors
+                previewChatHeader.style.background = 'linear-gradient(135deg, ' + primaryColor + ' 0%, ' + secondaryColor + ' 100%)';
+                previewToggle.style.background = 'linear-gradient(135deg, ' + primaryColor + ' 0%, ' + secondaryColor + ' 100%)';
+                
+                // Update text content
+                previewName.textContent = config.clientName || 'Support Team';
+                previewSubtitle.textContent = config.subtitle || 'How can we help?';
+                previewDescription.textContent = config.description || 'Ask us anything and we\'ll get back to you right away.';
+                previewInput.placeholder = config.placeholder || 'Type your message here...';
+                // Bot name is no longer displayed in the new message structure
+                
+                // Update refresh button visibility
+                var refreshBtn = document.querySelector('.preview-actions .preview-action-btn:first-child');
+                if (refreshBtn) {
+                    refreshBtn.style.display = config.showRefresh ? 'flex' : 'none';
+                }
+                
+                // Update profile icon/avatar in header
+                var iconToUse = config.profileIcon || (config.useLogoAsProfile && config.companyLogo ? config.companyLogo : null);
+                
+                // Update avatar content (preserve status indicator)
+                if (iconToUse) {
+                    previewAvatar.innerHTML = '<img src="' + iconToUse + '" alt="Profile" onerror="this.parentNode.innerHTML=\'<span class=&quot;material-icons&quot;>person</span>\'">';
+                } else {
+                    previewAvatar.innerHTML = '<span class="material-icons">person</span>';
+                }
+                
+                // Always add status indicator after updating avatar content
+                if (config.showStatus) {
+                    var statusIndicator = document.createElement('div');
+                    statusIndicator.id = 'preview-status-indicator';
+                    statusIndicator.className = 'status-indicator ' + (config.status || 'online');
+                    statusIndicator.style.display = 'block';
+                    previewAvatar.appendChild(statusIndicator);
+                }
+                
+                // Update bot avatar (same logic as header avatar, but no status indicator)
+                if (iconToUse) {
+                    previewBotAvatar.innerHTML = '<img src="' + iconToUse + '" alt="Bot Avatar" onerror="this.parentNode.innerHTML=\'<span class=&quot;material-icons&quot;>person</span>\'">';
+                } else {
+                    previewBotAvatar.innerHTML = '<span class="material-icons">person</span>';
+                }
+                
+                // Update toggle button
+                if (config.useLogoAsToggle && config.companyLogo) {
+                    previewToggle.innerHTML = '<img src="' + config.companyLogo + '" alt="Toggle Logo" class="preview-toggle-logo" onerror="this.innerHTML=\'<span class=&quot;material-icons&quot;>forum</span>\'">';
+                } else {
+                    previewToggle.innerHTML = '<span class="material-icons">forum</span>';
+                }
+                
+                // Update theme (handle auto-detection)
+                var previewWidget = document.querySelector('.preview-widget');
+                var previewInputArea = document.querySelector('.preview-input-area');
+                var previewMessages = document.querySelector('.preview-messages');
+                var previewBotMessage = document.querySelector('.preview-bot-message');
+                var effectiveTheme = config.theme || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+                
+                if (effectiveTheme === 'dark') {
+                    previewWidget.style.setProperty('--bg', '#1f2937');
+                    previewWidget.style.setProperty('--text', '#f9fafb');
+                    previewWidget.style.setProperty('--light-bg', '#374151');
+                    previewWidget.style.setProperty('--border', '#374151');
+                    previewWidget.style.background = '#1f2937';
+                    previewWidget.style.color = '#f9fafb';
+                    previewDescription.style.background = '#374151';
+                    previewDescription.style.color = '#f9fafb';
+                    if (previewMessages) {
+                        previewMessages.style.background = '#1f2937';
+                    }
+                    if (previewInputArea) {
+                        previewInputArea.style.background = '#1f2937';
+                        previewInput.style.color = '#f9fafb';
+                    }
+                    if (previewBotMessage) {
+                        previewBotMessage.style.background = '#374151';
+                        previewBotMessage.style.color = '#f9fafb';
+                    }
+                } else {
+                    previewWidget.style.setProperty('--bg', 'white');
+                    previewWidget.style.setProperty('--text', '#374151');
+                    previewWidget.style.setProperty('--light-bg', '#f8fafc');
+                    previewWidget.style.setProperty('--border', '#e2e8f0');
+                    previewWidget.style.background = 'white';
+                    previewWidget.style.color = '#374151';
+                    previewDescription.style.background = '#f8fafc';
+                    previewDescription.style.color = '#6b7280';
+                    if (previewMessages) {
+                        previewMessages.style.background = 'white';
+                    }
+                    if (previewInputArea) {
+                        previewInputArea.style.background = 'white';
+                        previewInput.style.color = '#374151';
+                    }
+                    if (previewBotMessage) {
+                        previewBotMessage.style.background = '#f8fafc';
+                        previewBotMessage.style.color = '#374151';
+                    }
+                }
+                
+                // Hide description when messages are present (matches actual widget behavior)
+                var messagesContainer = document.querySelector('.preview-messages');
+                var hasMessages = messagesContainer && messagesContainer.children.length > 0;
+                if (hasMessages) {
+                    previewDescription.classList.add('hidden');
+                } else {
+                    previewDescription.classList.remove('hidden');
+                }
+                
+                // Handle embedded mode - hide toggle button and show widget always open
+                var previewWidgetContainer = document.querySelector('.preview-widget-container');
+                if (config.position === 'embedded') {
+                    // Hide toggle button for embedded mode
+                    previewToggle.style.display = 'none';
+                    // Center the widget and remove positioning
+                    if (previewWidgetContainer) {
+                        previewWidgetContainer.style.position = 'static';
+                        previewWidgetContainer.style.margin = '0 auto';
+                        previewWidgetContainer.style.display = 'flex';
+                        previewWidgetContainer.style.justifyContent = 'center';
+                        previewWidgetContainer.style.alignItems = 'center';
+                        previewWidgetContainer.classList.add('embedded-mode');
+                    }
+                } else {
+                    // Show toggle button for normal modes
+                    previewToggle.style.display = 'flex';
+                    // Reset positioning for normal modes
+                    if (previewWidgetContainer) {
+                        previewWidgetContainer.style.position = 'relative';
+                        previewWidgetContainer.style.margin = 'auto 6rem auto 0';
+                        previewWidgetContainer.style.display = 'block';
+                        previewWidgetContainer.style.justifyContent = 'unset';
+                        previewWidgetContainer.style.alignItems = 'unset';
+                        previewWidgetContainer.classList.remove('embedded-mode');
+                    }
+                }
+            }
+            
+            // Main generation function
+            function generateCode() {
+                try {
+                    var config = getConfig();
+                    var errors = validateConfig(config);
+                    
+                    // Clear previous errors
+                    form.querySelectorAll('.error').forEach(clearError);
+                    
+                    // Show validation errors
+                    if (errors.length > 0) {
+                        errors.forEach(function(error) {
+                            var element = document.getElementById(error.field);
+                            if (element) {
+                                showError(element, error.message);
+                            }
+                        });
+                        
+                        codeOutput.textContent = 'Please fix the validation errors above to generate code.';
+                        copyBtn.style.display = 'none';
+                        return;
+                    }
+                    
+                    updatePreview(config);
+                    
+                    if (config.clientId && config.clientName) {
+                        var code = generateWidgetCode(config);
+                        codeOutput.textContent = code;
+                        copyBtn.style.display = 'flex';
+                        
+                        // Save valid configuration
+                        saveConfig(config);
+                    } else {
+                        codeOutput.textContent = 'Please fill in Client ID and Business Name to generate code...';
+                        copyBtn.style.display = 'none';
+                    }
+                } catch (error) {
+                    console.error('Error generating config:', error);
+                    codeOutput.textContent = 'Error generating code. Please check the browser console for details.';
+                    copyBtn.style.display = 'none';
+                }
+            }
+            
+            // Copy functionality
+            function copyToClipboard() {
+                var textToCopy = codeOutput.textContent;
+                
+                if (!textToCopy || textToCopy.includes('Please fill in') || textToCopy.includes('Error')) {
+                    return;
+                }
+                
+                copyBtn.disabled = true;
+                
+                var copyPromise;
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    copyPromise = navigator.clipboard.writeText(textToCopy);
+                } else {
+                    // Fallback for older browsers
+                    copyPromise = new Promise(function(resolve, reject) {
+                        try {
+                            var textArea = document.createElement('textarea');
+                            textArea.value = textToCopy;
+                            textArea.style.position = 'fixed';
+                            textArea.style.opacity = '0';
+                            document.body.appendChild(textArea);
+                            textArea.focus();
+                            textArea.select();
+                            
+                            var successful = document.execCommand('copy');
+                            document.body.removeChild(textArea);
+                            
+                            if (successful) {
+                                resolve();
+                            } else {
+                                reject(new Error('Copy command failed'));
+                            }
+                        } catch (err) {
+                            reject(err);
+                        }
+                    });
+                }
+                
+                copyPromise
+                    .then(function() {
+                        copyBtn.innerHTML = 'Copied!';
+                        copyBtn.classList.add('copied');
+                        showSuccess(codeOutput);
+                        
+                        setTimeout(function() {
+                            copyBtn.innerHTML = '<span class="material-icons">content_copy</span>';
+                            copyBtn.classList.remove('copied');
+                            copyBtn.disabled = false;
+                        }, 2000);
+                    })
+                    .catch(function(err) {
+                        console.error('Copy failed:', err);
+                        copyBtn.innerHTML = 'Failed';
+                        
+                        setTimeout(function() {
+                            copyBtn.innerHTML = '<span class="material-icons">content_copy</span>';
+                            copyBtn.disabled = false;
+                        }, 2000);
+                    });
+            }
+            
+            // Event listeners
+            var debouncedGenerate = debounce(generateCode, DEBOUNCE_DELAY);
+            
+            form.addEventListener('input', function(e) {
+                if (e.target.id === 'clientId') {
+                    // Auto-format client ID
+                    var value = e.target.value;
+                    var formatted = value.toLowerCase().replace(/[^a-z0-9_]/g, '_');
+                    if (value !== formatted) {
+                        e.target.value = formatted;
+                    }
+                }
+                debouncedGenerate();
+            });
+            
+            form.addEventListener('change', generateCode);
+            
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                generateCode();
+            });
+            
+            copyBtn.addEventListener('click', copyToClipboard);
+            
+            // Keyboard accessibility for code output
+            codeOutput.addEventListener('keydown', function(e) {
+                if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
+                    copyToClipboard();
+                }
+            });
+            
+            // Single color functionality
+            function toggleSingleColor() {
+                var useSingleColor = document.getElementById('useSingleColor').checked;
+                var secondaryColorSection = document.getElementById('secondary-color-section');
+                var primaryColor = document.getElementById('primaryColor').value;
+                var secondaryColor = document.getElementById('secondaryColor');
+                var secondaryColorHex = document.getElementById('secondaryColorHex');
+                
+                if (useSingleColor) {
+                    secondaryColorSection.classList.add('secondary-hidden');
+                    secondaryColor.value = primaryColor;
+                    secondaryColorHex.value = primaryColor;
+                } else {
+                    secondaryColorSection.classList.remove('secondary-hidden');
+                }
+                
+                generateCode();
+            }
+            
+            // Color input synchronization
+            function syncColorInputs(colorInput, hexInput) {
+                colorInput.addEventListener('input', function() {
+                    hexInput.value = colorInput.value.toUpperCase();
+                    
+                    // If single color is enabled and this is primary color, update secondary too
+                    if (colorInput.id === 'primaryColor' && document.getElementById('useSingleColor').checked) {
+                        document.getElementById('secondaryColor').value = colorInput.value;
+                        document.getElementById('secondaryColorHex').value = colorInput.value.toUpperCase();
+                    }
+                    
+                    generateCode();
+                });
+                
+                hexInput.addEventListener('input', function() {
+                    var value = hexInput.value;
+                    if (value.match(/^#[0-9A-Fa-f]{6}$/)) {
+                        colorInput.value = value;
+                        
+                        // If single color is enabled and this is primary color, update secondary too
+                        if (colorInput.id === 'primaryColor' && document.getElementById('useSingleColor').checked) {
+                            document.getElementById('secondaryColor').value = value;
+                            document.getElementById('secondaryColorHex').value = value.toUpperCase();
+                        }
+                        
+                        generateCode();
+                    }
+                });
+            }
+
+            // Toggle functionality
+            function toggleView(view) {
+                var previewToggleBtn = document.getElementById('preview-toggle-btn');
+                var codeToggleBtn = document.getElementById('code-toggle-btn');
+                var previewView = document.getElementById('preview-view');
+                var codeView = document.getElementById('code-view');
+                
+                if (view === 'preview') {
+                    previewToggleBtn.classList.add('active');
+                    codeToggleBtn.classList.remove('active');
+                    previewView.classList.add('active');
+                    codeView.classList.remove('active');
+                    previewToggleBtn.setAttribute('aria-pressed', 'true');
+                    codeToggleBtn.setAttribute('aria-pressed', 'false');
+                } else if (view === 'code') {
+                    previewToggleBtn.classList.remove('active');
+                    codeToggleBtn.classList.add('active');
+                    previewView.classList.remove('active');
+                    codeView.classList.add('active');
+                    previewToggleBtn.setAttribute('aria-pressed', 'false');
+                    codeToggleBtn.setAttribute('aria-pressed', 'true');
+                }
+            }
+            
+            // URL linkification utility (matches chatwidget.js)
+            function linkifyText(text) {
+                var urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+|[^\s]+@[^\s]+\.[^\s]+)/g;
+                return text.replace(urlRegex, function(url) {
+                    var href = url.startsWith('http') ? url : 'https://' + url;
+                    return '<a href="' + href + '" target="_blank" rel="noopener noreferrer">' + url + '</a>';
+                });
+            }
+            
+            // Initialize
+            function init() {
+                loadConfig();
+                generateCode(); // This will call updatePreview with proper config
+                
+                // Apply linkification to demo bot message
+                var previewBotMessage = document.querySelector('.preview-bot-message');
+                if (previewBotMessage) {
+                    var originalText = 'Welcome! How can I help you today? You can also visit https://example.com for more info.';
+                    previewBotMessage.innerHTML = linkifyText(originalText);
+                }
+                
+                // Set up toggle event listeners
+                var previewToggleBtn = document.getElementById('preview-toggle-btn');
+                var codeToggleBtn = document.getElementById('code-toggle-btn');
+                
+                previewToggleBtn.addEventListener('click', function() {
+                    toggleView('preview');
+                });
+                
+                codeToggleBtn.addEventListener('click', function() {
+                    toggleView('code');
+                });
+                
+                // Set up single color functionality
+                var useSingleColorCheckbox = document.getElementById('useSingleColor');
+                useSingleColorCheckbox.addEventListener('change', toggleSingleColor);
+                
+                // Set up color input synchronization
+                syncColorInputs(
+                    document.getElementById('primaryColor'),
+                    document.getElementById('primaryColorHex')
+                );
+                syncColorInputs(
+                    document.getElementById('secondaryColor'),
+                    document.getElementById('secondaryColorHex')
+                );
+                
+                // Announce to screen readers
+                var announcement = document.createElement('div');
+                announcement.setAttribute('aria-live', 'polite');
+                announcement.setAttribute('aria-atomic', 'true');
+                announcement.className = 'sr-only';
+                announcement.style.position = 'absolute';
+                announcement.style.left = '-10000px';
+                announcement.textContent = 'Chat Widget Config Generator loaded. Fill out the form to generate your custom embed code.';
+                document.body.appendChild(announcement);
+            }
+            
+            // Start when DOM is ready
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+            } else {
+                init();
+            }
+        })();
+    </script>
+</body>
+</html>

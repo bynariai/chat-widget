@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "/Users/gary/Dev/vercel-chatwidget/logs/.3ce3340fd934060794b2ab1851dd99a60f9247fb-audit.json",
+    "files": [
+        {
+            "date": 1752240346062,
+            "name": "/Users/gary/Dev/vercel-chatwidget/logs/mcp-puppeteer-2025-07-11.log",
+            "hash": "26cbb9f718dba1e0819f31bc8b40beefdbd47aa96891f6ab4ea40bb0ee6a15b5"
+        }
+    ],
+    "hashType": "sha256"
+}
