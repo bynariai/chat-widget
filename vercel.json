@@ -1,5 +1,7 @@
 {
   "version": 2,
+  "buildCommand": "echo 'Static files - no build needed'",
+  "outputDirectory": ".",
   "github": {
     "enabled": true,
     "autoAlias": true
