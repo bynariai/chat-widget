@@ -1,7 +1,7 @@
 {
   "name": "chat-widget",
   "version": "1.1.0",
-  "description": "Professional chat widget for websites - Easy integration, customizable, production-ready with enterprise security"
+  "description": "Professional chat widget for websites - Easy integration, customizable, production-ready with enterprise security",
   "main": "public/js/chatwidget.js",
   "scripts": {
     "dev": "vercel dev",
