@@ -1,1 +1,13 @@
-.vercel
+# Ignore everything
+/*
+
+# But not the public folder
+!/public/
+!/public/**
+
+# Still ignore OS files in public folder
+.DS_Store
+
+# Keep .gitignore and README.md
+!.gitignore
+!README.md
