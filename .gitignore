@@ -8,6 +8,12 @@
 # Still ignore OS files in public folder
 .DS_Store
 
-# Keep .gitignore and README.md
+# Keep essential files
 !.gitignore
 !README.md
+!package.json
+!vercel.json
+!client-examples.html
+!config-generator.html
+!test-local.html
+!test-local-with-config.html

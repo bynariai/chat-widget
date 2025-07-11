@@ -6,6 +6,12 @@
     'use strict';
 
     // ============================================================================
+    // NAMESPACE & VERSION
+    // ============================================================================
+    const WIDGET_NAMESPACE = 'cw-' + Math.random().toString(36).substr(2, 9);
+    const WIDGET_VERSION = '1.1.0';
+
+    // ============================================================================
     // BROWSER COMPATIBILITY & POLYFILLS
     // ============================================================================
     
@@ -34,7 +40,7 @@
     };
 
     // Prevent duplicate widget initialization
-    if (document.getElementById('chat-widget-container')) {
+    if (document.querySelector('[data-chat-widget-instance]')) {
         console.warn('[ChatWidget] Widget already exists, skipping initialization');
         return;
     }
@@ -95,6 +101,55 @@
     // UTILITY FUNCTIONS
     // ============================================================================
     
+    // Sanitize HTML to prevent XSS
+    const sanitizeHTML = (str) => {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    };
+
+    // Debounce function for performance
+    const debounce = (func, wait) => {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    };
+
+    // Rate limiter
+    const createRateLimiter = (maxRequests = 10, windowMs = 60000) => {
+        const requests = [];
+        return () => {
+            const now = Date.now();
+            const windowStart = now - windowMs;
+            
+            // Remove old requests outside the window
+            while (requests.length > 0 && requests[0] < windowStart) {
+                requests.shift();
+            }
+            
+            if (requests.length >= maxRequests) {
+                return false;
+            }
+            
+            requests.push(now);
+            return true;
+        };
+    };
+
+    // Detect mobile more reliably
+    const isMobileDevice = () => {
+        const touch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+        const mobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        const smallScreen = window.innerWidth <= 768;
+        return touch && (mobile || smallScreen);
+    };
+
     const getPreferredTheme = () => {
         try {
             return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
@@ -150,36 +205,63 @@
     // STYLES
     // ============================================================================
     
+    // Lazy load external resources
+    const loadExternalResources = () => {
+        // Load Material Icons if not already present
+        if (!document.querySelector('link[href*="Material+Icons"]')) {
+            const iconLink = document.createElement('link');
+            iconLink.rel = 'stylesheet';
+            iconLink.href = 'https://fonts.googleapis.com/icon?family=Material+Icons';
+            iconLink.setAttribute('data-chat-widget-resource', 'true');
+            document.head.appendChild(iconLink);
+        }
+
+        // Load Inter font if not already present
+        if (!document.querySelector('link[href*="Inter:wght"]')) {
+            const fontLink = document.createElement('link');
+            fontLink.rel = 'stylesheet';
+            fontLink.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap';
+            fontLink.setAttribute('data-chat-widget-resource', 'true');
+            document.head.appendChild(fontLink);
+        }
+    };
+
     const createStyles = () => {
         return `
-            /* Google Fonts */
-            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-            @import url('https://fonts.googleapis.com/icon?family=Material+Icons');
-
-            /* CSS Variables */
-            #chat-widget-container {
+            /* Namespaced CSS Variables */
+            [data-${WIDGET_NAMESPACE}] {
                 position: fixed;
                 z-index: ${CONSTANTS.WIDGET.Z_INDEX};
                 font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                --primary: ${config.primaryColor || '#3b82f6'};
-                --secondary: ${config.secondaryColor || '#1e40af'};
-                --bg: ${config.theme === 'dark' ? '#1f2937' : '#ffffff'};
-                --text: ${config.theme === 'dark' ? '#f9fafb' : '#0f172a'};
-                --border: ${config.theme === 'dark' ? '#374151' : '#e2e8f0'};
-                --light-bg: ${config.theme === 'dark' ? '#374151' : '#f1f5f9'};
-                --input: ${config.theme === 'dark' ? '#374151' : '#f8fafc'};
-                --placeholder: #94a3b8;
-                --timestamp: #94a3b8;
-                --button-hover: rgba(59,130,246,0.1);
-                --shadow: rgba(15,23,42,0.15);
-                --status-online: #10b981;
-                --status-away: #f59e0b;
-                --status-offline: #6b7280;
-                --status-border: white;
+                --${WIDGET_NAMESPACE}-primary: ${config.primaryColor || '#3b82f6'};
+                --${WIDGET_NAMESPACE}-secondary: ${config.secondaryColor || '#1e40af'};
+                --${WIDGET_NAMESPACE}-bg: ${config.theme === 'dark' ? '#1f2937' : '#ffffff'};
+                --${WIDGET_NAMESPACE}-text: ${config.theme === 'dark' ? '#f9fafb' : '#0f172a'};
+                --${WIDGET_NAMESPACE}-border: ${config.theme === 'dark' ? '#374151' : '#e2e8f0'};
+                --${WIDGET_NAMESPACE}-light-bg: ${config.theme === 'dark' ? '#374151' : '#f1f5f9'};
+                --${WIDGET_NAMESPACE}-input: ${config.theme === 'dark' ? '#374151' : '#f8fafc'};
+                --${WIDGET_NAMESPACE}-placeholder: #94a3b8;
+                --${WIDGET_NAMESPACE}-timestamp: #94a3b8;
+                --${WIDGET_NAMESPACE}-button-hover: rgba(59,130,246,0.1);
+                --${WIDGET_NAMESPACE}-shadow: rgba(15,23,42,0.15);
+                --${WIDGET_NAMESPACE}-status-online: #10b981;
+                --${WIDGET_NAMESPACE}-status-away: #f59e0b;
+                --${WIDGET_NAMESPACE}-status-offline: #6b7280;
+                --${WIDGET_NAMESPACE}-status-border: white;
+                /* Prevent style inheritance from host page */
+                all: initial;
+                font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                box-sizing: border-box;
+            }
+
+            [data-${WIDGET_NAMESPACE}] *,
+            [data-${WIDGET_NAMESPACE}] *::before,
+            [data-${WIDGET_NAMESPACE}] *::after {
+                box-sizing: border-box;
             }
 
             /* Demo Mode Styles */
-            #chat-widget-container.demo-centered {
+            [data-${WIDGET_NAMESPACE}].demo-centered {
                 position: fixed;
                 top: 50%;
                 left: 50%;
@@ -188,11 +270,11 @@
                 right: auto;
             }
 
-            #chat-widget-container.demo-embedded .chat-toggle {
+            [data-${WIDGET_NAMESPACE}].demo-embedded .${WIDGET_NAMESPACE}-toggle {
                 display: none !important;
             }
 
-            #chat-widget-container.demo-embedded {
+            [data-${WIDGET_NAMESPACE}].demo-embedded {
                 position: static !important;
                 top: auto !important;
                 left: auto !important;
@@ -206,7 +288,7 @@
                 height: auto !important;
             }
 
-            #chat-widget-container.demo-embedded .chat-container {
+            [data-${WIDGET_NAMESPACE}].demo-embedded .${WIDGET_NAMESPACE}-container {
                 opacity: 1 !important;
                 visibility: visible !important;
                 transform: translateY(0) !important;
@@ -220,28 +302,28 @@
                 height: ${CONSTANTS.WIDGET.HEIGHT}rem !important;
             }
 
-            #chat-widget-container.demo-embedded .chat-messages {
+            [data-${WIDGET_NAMESPACE}].demo-embedded .${WIDGET_NAMESPACE}-messages {
                 flex: 1;
                 overflow-y: auto;
             }
 
             /* Position Variants */
-            #chat-widget-container.pos-bottom-right {
+            [data-${WIDGET_NAMESPACE}].pos-bottom-right {
                 bottom: 20px;
                 right: 20px;
             }
 
-            #chat-widget-container.pos-bottom-left {
+            [data-${WIDGET_NAMESPACE}].pos-bottom-left {
                 bottom: 20px;
                 left: 20px;
             }
 
-            #chat-widget-container.pos-top-right {
+            [data-${WIDGET_NAMESPACE}].pos-top-right {
                 top: 20px;
                 right: 20px;
             }
 
-            #chat-widget-container.pos-top-left {
+            [data-${WIDGET_NAMESPACE}].pos-top-left {
                 top: 20px;
                 left: 20px;
             }
@@ -251,11 +333,11 @@
                 width: ${CONSTANTS.TOGGLE.SIZE}rem;
                 height: ${CONSTANTS.TOGGLE.SIZE}rem;
                 border-radius: 50%;
-                background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+                background: linear-gradient(135deg, var(--${WIDGET_NAMESPACE}-primary) 0%, var(--${WIDGET_NAMESPACE}-secondary) 100%);
                 border: none;
                 color: white;
                 cursor: pointer;
-                box-shadow: 0 0.25rem 0.75rem var(--shadow);
+                box-shadow: 0 0.25rem 0.75rem var(--${WIDGET_NAMESPACE}-shadow);
                 transition: all 0.2s ease;
                 display: flex;
                 align-items: center;
@@ -295,9 +377,9 @@
                 right: 0;
                 width: ${CONSTANTS.WIDGET.WIDTH}rem;
                 height: ${CONSTANTS.WIDGET.HEIGHT}rem;
-                background: var(--bg);
+                background: var(--${WIDGET_NAMESPACE}-bg);
                 border-radius: 0.75rem;
-                box-shadow: 0 0.625rem 1.5625rem var(--shadow);
+                box-shadow: 0 0.625rem 1.5625rem var(--${WIDGET_NAMESPACE}-shadow);
                 display: flex;
                 flex-direction: column;
                 overflow: hidden;
@@ -315,7 +397,7 @@
 
             /* Header */
             .chat-header {
-                background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+                background: linear-gradient(135deg, var(--${WIDGET_NAMESPACE}-primary) 0%, var(--${WIDGET_NAMESPACE}-secondary) 100%);
                 color: white;
                 padding: 1.25rem 1rem;
                 display: flex;
@@ -365,14 +447,14 @@
                 right: ${CONSTANTS.STATUS.OFFSET}rem;
                 width: ${CONSTANTS.STATUS.INDICATOR_SIZE}rem;
                 height: ${CONSTANTS.STATUS.INDICATOR_SIZE}rem;
-                border: ${CONSTANTS.STATUS.BORDER_WIDTH}rem solid var(--status-border);
+                border: ${CONSTANTS.STATUS.BORDER_WIDTH}rem solid var(--${WIDGET_NAMESPACE}-status-border);
                 border-radius: 50%;
-                box-shadow: 0 0.0625rem 0.1875rem var(--shadow);
+                box-shadow: 0 0.0625rem 0.1875rem var(--${WIDGET_NAMESPACE}-shadow);
                 z-index: 10;
             }
 
             .status-indicator.online {
-                background: var(--status-online);
+                background: var(--${WIDGET_NAMESPACE}-status-online);
                 border: none;
             }
 
@@ -384,17 +466,17 @@
                 right: 0;
                 bottom: 0;
                 border-radius: 50%;
-                background: var(--status-online);
+                background: var(--${WIDGET_NAMESPACE}-status-online);
                 opacity: 0.3;
                 animation: statusPulse 2s infinite;
             }
 
             .status-indicator.away {
-                background: var(--status-away);
+                background: var(--${WIDGET_NAMESPACE}-status-away);
             }
 
             .status-indicator.offline {
-                background: var(--status-offline);
+                background: var(--${WIDGET_NAMESPACE}-status-offline);
             }
 
             .chat-header-text {
@@ -459,12 +541,12 @@
 
             /* Description */
             .chat-description {
-                background: var(--light-bg);
-                color: var(--text);
+                background: var(--${WIDGET_NAMESPACE}-light-bg);
+                color: var(--${WIDGET_NAMESPACE}-text);
                 padding: 1.25rem;
                 font-size: ${CONSTANTS.FONTS.DESCRIPTION}rem;
                 text-align: left;
-                border-bottom: 1px solid var(--border);
+                border-bottom: 1px solid var(--${WIDGET_NAMESPACE}-border);
                 opacity: 0.8;
                 display: block;
             }
@@ -519,7 +601,7 @@
 
             .message.user {
                 align-self: flex-end;
-                background: var(--primary);
+                background: var(--${WIDGET_NAMESPACE}-primary);
                 color: white;
                 border-bottom-right-radius: 4px;
                 max-width: 80%;
@@ -539,14 +621,14 @@
                 width: ${CONSTANTS.AVATAR.BOT_SIZE}rem;
                 height: ${CONSTANTS.AVATAR.BOT_SIZE}rem;
                 border-radius: 50%;
-                background: var(--light-bg);
+                background: var(--${WIDGET_NAMESPACE}-light-bg);
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 font-size: ${CONSTANTS.AVATAR.BOT_ICON_SIZE}rem;
                 flex-shrink: 0;
                 overflow: hidden;
-                border: 1px solid var(--border);
+                border: 1px solid var(--${WIDGET_NAMESPACE}-border);
             }
 
             .bot-avatar img {
@@ -558,14 +640,14 @@
 
             .bot-avatar .material-icons {
                 font-size: ${CONSTANTS.AVATAR.BOT_ICON_SIZE}rem;
-                color: var(--text);
+                color: var(--${WIDGET_NAMESPACE}-text);
                 opacity: 0.7;
             }
 
             /* Bot message content */
             .bot-message-content {
-                background: var(--light-bg);
-                color: var(--text);
+                background: var(--${WIDGET_NAMESPACE}-light-bg);
+                color: var(--${WIDGET_NAMESPACE}-text);
                 padding: 0.75rem 1rem;
                 border-radius: 1.125rem;
                 border-top-left-radius: 0.25rem;
@@ -577,14 +659,14 @@
             }
 
             .message a {
-                color: var(--primary) !important;
+                color: var(--${WIDGET_NAMESPACE}-primary) !important;
                 text-decoration: underline !important;
                 font-weight: 500 !important;
                 word-break: break-all;
             }
 
             .message a:hover {
-                color: var(--secondary) !important;
+                color: var(--${WIDGET_NAMESPACE}-secondary) !important;
                 text-decoration: underline !important;
             }
 
@@ -595,9 +677,9 @@
 
             /* Input Area */
             .chat-input-area {
-                background: var(--bg);
+                background: var(--${WIDGET_NAMESPACE}-bg);
                 padding: 0.75rem;
-                border-top: 1px solid var(--border);
+                border-top: 1px solid var(--${WIDGET_NAMESPACE}-border);
                 display: flex;
                 align-items: center;
                 gap: 0.5rem;
@@ -614,7 +696,7 @@
                 font-size: ${CONSTANTS.FONTS.INPUT}rem;
                 font-family: inherit;
                 background: transparent;
-                color: var(--text);
+                color: var(--${WIDGET_NAMESPACE}-text);
                 resize: none;
                 line-height: 1.4;
                 word-wrap: break-word;
@@ -623,7 +705,7 @@
             }
 
             .chat-input::placeholder {
-                color: var(--placeholder);
+                color: var(--${WIDGET_NAMESPACE}-placeholder);
             }
 
             .chat-send-btn {
@@ -651,12 +733,12 @@
             }
 
             .chat-send-btn.active {
-                color: var(--primary);
+                color: var(--${WIDGET_NAMESPACE}-primary);
                 cursor: pointer;
             }
 
             .chat-send-btn.active:hover {
-                color: var(--secondary);
+                color: var(--${WIDGET_NAMESPACE}-secondary);
                 transform: scale(1.05);
             }
 
@@ -668,7 +750,7 @@
             /* Timestamp */
             .timestamp {
                 text-align: center;
-                color: var(--timestamp);
+                color: var(--${WIDGET_NAMESPACE}-timestamp);
                 font-size: ${CONSTANTS.FONTS.TIMESTAMP}rem;
                 margin: 10px 0;
                 position: relative;
@@ -681,7 +763,7 @@
                 top: 50%;
                 width: 30%;
                 height: 1px;
-                background: var(--border);
+                background: var(--${WIDGET_NAMESPACE}-border);
             }
 
             .timestamp::before {
@@ -790,8 +872,8 @@
                 .chat-input-area {
                     padding: 0.75rem;
                     padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
-                    background: var(--bg);
-                    border-top: 1px solid var(--border);
+                    background: var(--${WIDGET_NAMESPACE}-bg);
+                    border-top: 1px solid var(--${WIDGET_NAMESPACE}-border);
                     position: sticky;
                     bottom: 0;
                 }
@@ -896,7 +978,7 @@
         // Add status indicator if enabled
         if (showStatus && config.showStatus) {
             const statusIndicator = document.createElement('div');
-            statusIndicator.className = `status-indicator ${statusValue}`;
+            statusIndicator.className = `${WIDGET_NAMESPACE}-status-indicator ${statusValue}`;
             statusIndicator.setAttribute('aria-label', `Status: ${statusValue}`);
             avatar.appendChild(statusIndicator);
         }
@@ -906,7 +988,8 @@
 
     const createChatWidget = () => {
         const container = document.createElement('div');
-        container.id = CONSTANTS.WIDGET.CONTAINER_ID;
+        container.setAttribute('data-' + WIDGET_NAMESPACE, '');
+        container.setAttribute('data-chat-widget-instance', WIDGET_VERSION);
         
         if (config.demoMode) {
             container.classList.add(`demo-${config.demoMode}`);
@@ -916,7 +999,7 @@
 
         // Toggle Button
         const toggleBtn = document.createElement('button');
-        toggleBtn.className = 'chat-toggle';
+        toggleBtn.className = WIDGET_NAMESPACE + '-toggle';
         toggleBtn.setAttribute('aria-label', 'Open chat');
         toggleBtn.setAttribute('aria-expanded', 'false');
 
@@ -929,26 +1012,26 @@
 
         // Chat Container
         const chatContainer = document.createElement('div');
-        chatContainer.className = 'chat-container';
+        chatContainer.className = WIDGET_NAMESPACE + '-container';
 
         // Header
         const header = document.createElement('div');
-        header.className = 'chat-header';
+        header.className = WIDGET_NAMESPACE + '-header';
 
         const headerInfo = document.createElement('div');
-        headerInfo.className = 'chat-header-info';
+        headerInfo.className = WIDGET_NAMESPACE + '-header-info';
 
-        const avatar = createAvatar('chat-avatar', true, config.status);
+        const avatar = createAvatar(WIDGET_NAMESPACE + '-avatar', true, config.status);
 
         const textInfo = document.createElement('div');
-        textInfo.className = 'chat-header-text';
+        textInfo.className = WIDGET_NAMESPACE + '-header-text';
 
         const titleDiv = document.createElement('div');
-        titleDiv.className = 'chat-title';
+        titleDiv.className = WIDGET_NAMESPACE + '-title';
         titleDiv.textContent = config.clientName;
 
         const subtitleDiv = document.createElement('div');
-        subtitleDiv.className = 'chat-subtitle';
+        subtitleDiv.className = WIDGET_NAMESPACE + '-subtitle';
         subtitleDiv.textContent = config.subtitle;
 
         textInfo.appendChild(titleDiv);
@@ -958,11 +1041,11 @@
         headerInfo.appendChild(textInfo);
 
         const actions = document.createElement('div');
-        actions.className = 'chat-actions';
+        actions.className = WIDGET_NAMESPACE + '-actions';
 
         if (config.showRefresh) {
             const refreshBtn = document.createElement('button');
-            refreshBtn.className = 'chat-action-btn';
+            refreshBtn.className = WIDGET_NAMESPACE + '-action-btn';
             refreshBtn.innerHTML = '<span class="material-icons">refresh</span>';
             refreshBtn.setAttribute('aria-label', 'Refresh chat');
             refreshBtn.onclick = () => refreshChat();
@@ -970,7 +1053,7 @@
         }
 
         const closeBtn = document.createElement('button');
-        closeBtn.className = 'chat-action-btn';
+        closeBtn.className = WIDGET_NAMESPACE + '-action-btn';
         closeBtn.innerHTML = '<span class="material-icons">close</span>';
         closeBtn.setAttribute('aria-label', 'Close chat');
         closeBtn.onclick = () => toggleChat();
@@ -981,27 +1064,27 @@
 
         // Description
         const description = document.createElement('div');
-        description.className = 'chat-description';
+        description.className = WIDGET_NAMESPACE + '-description';
         description.id = 'chat-description';
         description.textContent = config.description;
 
         // Messages Area
         const messagesArea = document.createElement('div');
-        messagesArea.className = 'chat-messages';
+        messagesArea.className = WIDGET_NAMESPACE + '-messages';
         messagesArea.id = 'chat-messages';
 
         // Input Area
         const inputArea = document.createElement('div');
-        inputArea.className = 'chat-input-area';
+        inputArea.className = WIDGET_NAMESPACE + '-input-area';
 
         const input = document.createElement('textarea');
-        input.className = 'chat-input';
+        input.className = WIDGET_NAMESPACE + '-input';
         input.placeholder = config.placeholder;
         input.rows = 1;
         input.id = 'chat-input';
 
         const sendBtn = document.createElement('button');
-        sendBtn.className = 'chat-send-btn';
+        sendBtn.className = WIDGET_NAMESPACE + '-send-btn';
         sendBtn.innerHTML = '<span class="material-icons">send_outlined</span>';
         sendBtn.setAttribute('aria-label', 'Send message');
         sendBtn.id = 'chat-send-btn';
@@ -1094,14 +1177,15 @@
             messageWrapper.className = 'message bot';
             
             // Create bot avatar
-            const botAvatar = createAvatar('bot-avatar');
+            const botAvatar = createAvatar(WIDGET_NAMESPACE + '-bot-avatar');
             
             // Create message content
             const messageContent = document.createElement('div');
-            messageContent.className = 'bot-message-content';
+            messageContent.className = WIDGET_NAMESPACE + '-bot-message-content';
             
-            // Auto-detect and convert URLs to clickable links
-            messageContent.innerHTML = linkifyText(text);
+            // Safely set content with sanitization
+            const safeContent = linkifyText(text);
+            messageContent.innerHTML = safeContent;
             
             // Assemble bot message structure
             messageWrapper.appendChild(botAvatar);
@@ -1141,10 +1225,10 @@
         const typingDiv = document.createElement('div');
         typingDiv.className = 'message bot typing';
         
-        const typingAvatar = createAvatar('bot-avatar');
+        const typingAvatar = createAvatar(WIDGET_NAMESPACE + '-bot-avatar');
         
         const typingContent = document.createElement('div');
-        typingContent.className = 'bot-message-content typing-content';
+        typingContent.className = WIDGET_NAMESPACE + '-bot-message-content ' + WIDGET_NAMESPACE + '-typing-content';
         typingContent.textContent = 'Typing...';
         
         typingDiv.appendChild(typingAvatar);
@@ -1155,20 +1239,68 @@
         return typingDiv;
     };
 
+    // Fetch with retry logic
+    const fetchWithRetry = async (url, options, retries = CONSTANTS.RETRY.MAX_ATTEMPTS) => {
+        let lastError;
+        
+        for (let i = 0; i < retries; i++) {
+            try {
+                const timeoutId = setTimeout(() => {
+                    if (abortController && !abortController.signal.aborted) {
+                        abortController.abort();
+                    }
+                }, CONSTANTS.TIMEOUTS.NETWORK_REQUEST);
+                
+                const response = await fetch(url, options);
+                clearTimeout(timeoutId);
+                
+                if (!response.ok && response.status >= 500 && i < retries - 1) {
+                    // Server error, retry
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                return response;
+            } catch (error) {
+                lastError = error;
+                
+                if (error.name === 'AbortError' || i === retries - 1) {
+                    throw error;
+                }
+                
+                // Calculate delay with exponential backoff
+                const delay = Math.min(
+                    CONSTANTS.RETRY.BASE_DELAY * Math.pow(2, i),
+                    CONSTANTS.RETRY.MAX_DELAY
+                );
+                
+                console.log(`[ChatWidget] Retry ${i + 1}/${retries} after ${delay}ms`);
+                await new Promise(resolve => setTimeout(resolve, delay));
+                
+                // Create new abort controller for retry
+                abortController = browserSupport.createAbortController();
+                options.signal = abortController.signal;
+            }
+        }
+        
+        throw lastError;
+    };
+
     const sendRequest = async (message) => {
         abortController = browserSupport.createAbortController();
         
-        const response = await fetch(config.webhookUrl, {
+        const response = await fetchWithRetry(config.webhookUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'X-Client-ID': config.clientId,
-                'X-Session-ID': sessionId
+                'X-Session-ID': sessionId,
+                'X-Widget-Version': WIDGET_VERSION
             },
             body: JSON.stringify({
-                message: message,
+                message: sanitizeHTML(message),
                 client_id: config.clientId,
-                session_id: sessionId
+                session_id: sessionId,
+                timestamp: new Date().toISOString()
             }),
             signal: abortController.signal
         });
@@ -1183,7 +1315,12 @@
     };
 
     const linkifyText = (text) => {
-        return text; // No processing - backend handles all formatting
+        // Sanitize text first to prevent XSS
+        const sanitized = sanitizeHTML(text);
+        
+        // Convert URLs to links if backend didn't already
+        const urlRegex = /(https?:\/\/[^\s<>"]+)/g;
+        return sanitized.replace(urlRegex, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
     };
 
     const handleSuccessResponse = (data, typingDiv) => {
@@ -1196,14 +1333,14 @@
             'I apologize, but I encountered an issue processing your message. Please try again.';
         
         // Convert existing typing indicator to actual message (smooth transition)
-        const typingContent = typingDiv.querySelector('.typing-content');
+        const typingContent = typingDiv.querySelector('.' + WIDGET_NAMESPACE + '-typing-content');
         if (typingContent) {
             const linkifiedText = linkifyText(botMessage);
             
             // Update content and remove typing styles
             typingContent.innerHTML = linkifiedText;
-            typingContent.classList.remove('typing-content');
-            typingDiv.classList.remove('typing');
+            typingContent.classList.remove(WIDGET_NAMESPACE + '-typing-content');
+            typingDiv.classList.remove(WIDGET_NAMESPACE + '-typing');
         } else {
             // Fallback: remove typing indicator and add new message
             messagesArea.removeChild(typingDiv);
@@ -1233,12 +1370,11 @@
         addMessage(errorMessage, false);
     };
 
-    // Send message - Simplified main function
-    const sendMessage = async () => {
-        const message = prepareMessage();
-        if (!message) return;
-        
-        displayUserMessage(message);
+    // Rate limiter instance
+    const rateLimiter = createRateLimiter(10, 60000); // 10 messages per minute
+    
+    // Debounced send function
+    const debouncedSend = debounce(async (message) => {
         const typingIndicator = createTypingIndicator();
         
         try {
@@ -1247,6 +1383,33 @@
         } catch (error) {
             handleSendError(error, typingIndicator);
         }
+    }, 300);
+    
+    // Send message - Main function with rate limiting
+    const sendMessage = async () => {
+        const message = prepareMessage();
+        if (!message) return;
+        
+        // Check rate limit
+        if (!rateLimiter()) {
+            addMessage('Please wait a moment before sending another message.', false);
+            return;
+        }
+        
+        // Validate message length
+        if (message.length > 1000) {
+            addMessage('Your message is too long. Please keep it under 1000 characters.', false);
+            return;
+        }
+        
+        displayUserMessage(message);
+        
+        // Cancel any pending request
+        if (abortController && !abortController.signal.aborted) {
+            abortController.abort();
+        }
+        
+        debouncedSend(message);
     };
 
     // Add timestamp
