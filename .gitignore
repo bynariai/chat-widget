@@ -4,3 +4,8 @@ node_modules/
 *.log
 logs/
 supabase/
+.env
+.env.*
+.env.local
+.env.production
+.claude/
