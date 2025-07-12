@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Widget Test</title>
+    <style>
+        /* Add this to ensure proper widget display */
+        #chat-widget-container {
+            position: fixed !important;
+            z-index: 2147483647 !important;
+        }
+    </style>
+</head>
+<body>
+    <h1>Chat Widget Test Page</h1>
+    <p>The widget should appear in the bottom right corner.</p>
+    
+    <!-- Chat Widget -->
+    <script
+        src="https://chat-widget-iota-five.vercel.app/js/chatwidget.js"
+        data-client-id="adoniamedicalclinic"
+        data-client-name="Adonia Medical Clinic"
+        data-subtitle="Expert Dermatology Care"
+        data-description="Get instant answers about our treatments, book appointments, and more."
+        data-placeholder="How can we help you?"
+        data-primary-color="#a39976"
+        data-secondary-color="#a39976">
+    </script>
+</body>
+</html>
